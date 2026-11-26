@@ -1,0 +1,10 @@
+{
+  "name": "token-radar-01",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Landfall: a token launch radar that ranks pre-token protocols by implied launch value.",
+  "scripts": {
+    "build": "node main.ts --input ../token-radar-01-kit/input/snapshot.json --output out"
+  }
+}

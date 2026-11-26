@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landfall — token launch radar</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#board-panel">Skip to the board</a>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="wordmark"><span class="mark" aria-hidden="true"></span>LANDFALL</div>
+      <h1>Token launch radar</h1>
+      <p class="lede">Pre-token protocols ranked by the fully-diluted value a launch would imply, with the cost and time of every step to farm each one.</p>
+    </div>
+    <dl class="snapshot" id="snapshot"></dl>
+  </header>
+
+  <section class="kpis" id="kpis" aria-label="Radar summary"></section>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" id="tab-radar" aria-selected="true" aria-controls="board-panel">Radar <span class="count" id="count-radar"></span></button>
+    <button role="tab" id="tab-live" aria-selected="false" aria-controls="live-panel" tabindex="-1">Trading now <span class="count" id="count-live"></span></button>
+    <button role="tab" id="tab-method" aria-selected="false" aria-controls="method-panel" tabindex="-1">Method</button>
+  </nav>
+
+  <section id="board-panel" role="tabpanel" aria-labelledby="tab-radar">
+    <div class="controls">
+      <label class="search" for="q"><span class="sr">Search</span><input id="q" type="search" placeholder="Search protocol, category or chain" autocomplete="off"></label>
+      <label class="select" for="category"><span>Category</span><select id="category"></select></label>
+      <label class="select" for="chain"><span>Chain</span><select id="chain"></select></label>
+      <label class="check" for="watch-only"><input type="checkbox" id="watch-only"><span>Watchlist only</span></label>
+      <label class="select" for="sort"><span>Sort</span><select id="sort">
+        <option value="implied">Implied value</option>
+        <option value="tvl">TVL</option>
+        <option value="change">7-day change</option>
+        <option value="age">Days without a token</option>
+        <option value="rank">Rank</option>
+        <option value="name">Name</option>
+      </select></label>
+      <button id="reset" class="ghost" type="button">Reset</button>
+    </div>
+    <div id="chips" class="chips" aria-live="polite"></div>
+    <div class="table-wrap">
+      <table id="board">
+        <thead>
+          <tr>
+            <th class="num"><button data-sort="rank" type="button">#</button></th>
+            <th><button data-sort="name" type="button">Protocol</button></th>
+            <th><button data-sort="category" type="button">Category</button></th>
+            <th>Chains</th>
+            <th class="num"><button data-sort="tvl" type="button">TVL</button></th>
+            <th class="num"><button data-sort="change" type="button">7d</button></th>
+            <th class="num"><button data-sort="age" type="button">No token</button></th>
+            <th class="num wide"><button data-sort="implied" type="button">Implied value</button></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="empty" hidden>No protocol matches these filters. Clear one and try again.</p>
+    </div>
+    <p class="table-note" id="table-note"></p>
+  </section>
+
+  <section id="live-panel" role="tabpanel" aria-labelledby="tab-live" hidden>
+    <div class="callout">
+      <strong>Context, not ranked.</strong> These protocols already record a token, so their value is the market's market cap, not a model's implied value. They are here only so a reader can see what a launch in the same category is worth today.
+    </div>
+    <div class="table-wrap">
+      <table id="live">
+        <thead><tr><th>Protocol</th><th>Symbol</th><th>Category</th><th>Chains</th><th class="num">TVL</th><th class="num">Market cap</th><th class="num">7d</th></tr></thead>
+        <tbody id="live-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="method-panel" role="tabpanel" aria-labelledby="tab-method" hidden>
+    <div class="method">
+      <article>
+        <h2>What the board ranks</h2>
+        <p>Every protocol whose DefiLlama record carries no token: market cap, CoinGecko id and symbol are all null. All 40 watchlist protocols are always on the board. On top of them the radar adds the 160 largest pre-token protocols below the watchlist floor of $50M TVL — the early signal the bounty exists to find. Wrapped, staked and exchange-named products and versioned pools are excluded, so the board is a launch list, not a TVL table.</p>
+        <p>Protocols that already trade are never ranked. They sit in <em>Trading now</em>, labelled as context, with their own market cap.</p>
+      </article>
+      <article>
+        <h2>The implied value</h2>
+        <p class="formula">implied = TVL × 0.26 × category tilt × momentum × maturity × breadth</p>
+        <dl class="factors">
+          <div><dt>Base rate</dt><dd>0.26 — a pre-token protocol's launch FDV as a share of the TVL it already custodies.</dd></div>
+          <div><dt>Category tilt</dt><dd>0.82× for liquid staking and bridges to 1.12× for perpetuals and derivatives, from the category string alone.</dd></div>
+          <div><dt>Momentum</dt><dd>1 + clamp(7-day TVL change, −60% to +180%) × 0.55.</dd></div>
+          <div><dt>Maturity</dt><dd>0.72 + min(days since listing, 1460) / 1460 × 0.53; unknown listing dates take 0.88.</dd></div>
+          <div><dt>Breadth</dt><dd>1 + min(chains − 1, 4) × 0.035.</dd></div>
+        </dl>
+        <p>Every factor is a pure function of a snapshot field. No protocol name is special-cased; each row's detail view shows its own arithmetic so the total can be checked by hand.</p>
+      </article>
+      <article>
+        <h2>The farm plan</h2>
+        <p>Seven steps per protocol: wallet hygiene, funding, the category's core action, a weekly qualifying action repeated for 8 to 12 weeks, a hold period of 30 to 90 days, a claim-hygiene step, and a written log with an exit rule. Capital, gas and hold time are derived from the protocol's own TVL, chain and age, and every step states its cost and its time.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span id="foot-source"></span>
+    <span>Built for the make.fun bounty <span class="mono">token-radar-01</span>. Snapshot is read-only; the implied value is this radar's claim, never make.fun's.</span>
+  </footer>
+</div>
+
+<aside id="detail" class="detail" aria-labelledby="detail-name" hidden></aside>
+<div id="scrim" class="scrim" hidden></div>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
